@@ -6,29 +6,34 @@ using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using System.Diagnostics;
 
 namespace AudioPPM
 {
-    public class SoundGenerator
+    public class PpmGenerator
     {
         private IWavePlayer _player;
+        private PpmProvider _provider;
 
-        public SoundGenerator()
+        public PpmGenerator(byte channelsCount, MMDevice device)
         {
-            var provider = new PpmProvider(6);
-
-            _player = new DirectSoundOut();
-            _player.Init(provider);
-
-            /*byte[] a = new byte[10];
-
-            while (true)
-            {
-                provider.Read(a, 0, 10);
-            }*/
+            _provider = new PpmProvider(channelsCount);
+            _player = new  WasapiOut(device, AudioClientShareMode.Shared, false, 30);
+            _player.Init(_provider);
         }
 
-        public void Play()
+        public static MMDeviceCollection GetDevices()
+        {
+            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.All);
+        }
+
+        public void SetValues(byte[] values)
+        {
+            _provider.SetValues(values);
+        }
+
+        public void Start()
         {
             _player.Play();
 
@@ -85,7 +90,7 @@ namespace AudioPPM
             return new PpmProfile()
             {
                 PauseDuration = 500,
-                Polarity = PpmPolarity.LOW,
+                Polarity = PpmPolarity.HIGH,
                 MinChannelDuration = 1000,
                 MaxChannelDuration = 2000,
                 Period = 20000
@@ -133,10 +138,11 @@ namespace AudioPPM
         private readonly WaveFormat _waveFormat;
         private PpmProfile _ppmProfile;
 
-        // Data buffers. Double buffering is used
-        private readonly byte[][] _buffers;
-        private readonly int _currentBuffer;
+        // Data buffers
+        private readonly byte[] _playingBuffer;
+        private readonly byte[] _writingBuffer;
         private int _currentChannel;
+        private object _lock;
 
         // PPM timing params
         private int _currentChannelSample;
@@ -144,14 +150,14 @@ namespace AudioPPM
         private int _periodSamples;
         private int _totalSamples;
 
-        public WaveFormat WaveFormat => _waveFormat;
+        private const float DIVIDER = 1000000;
 
         /// <summary>
         /// PPM timings and polarity settings. Read only.
         /// </summary>
         public PpmProfile PpmProfile => _ppmProfile;
 
-        public byte Channels { get; private set; }
+        public byte ChannelsCount { get; private set; }
 
 
 
@@ -162,18 +168,20 @@ namespace AudioPPM
 
         public PpmProvider(byte channels, int sampleRate, PpmProfile ppmProfile)
         {
-            Channels = channels;
+            ChannelsCount = channels;
             _ppmProfile = ppmProfile;
             _waveFormat = new WaveFormat(sampleRate, 1);
 
-            _buffers = new byte[2][];
-            for (int i = 0; i < 2; i++)
-                _buffers[i] = new byte[] { 255, 0, 0, 255, 0, 255 };
+            _playingBuffer = new byte[channels];
+            _writingBuffer = new byte[channels];
 
-            _currentBuffer = 0;
+            _lock = new object();
+
             _currentChannel = 0;
             _currentChannelSample = 0;
             _totalSamples = 0;
+
+            _pauseSamples = (int)(_ppmProfile.PauseDuration / 1000000.0 * _waveFormat.SampleRate);
 
             TakeNextChannel();
         }
@@ -188,22 +196,24 @@ namespace AudioPPM
         public void SetValues(byte[] values)
         {
             // 1 - _currentBuffer is buffer swapping
-            Array.Copy(values, _buffers[1 - _currentBuffer], Channels);
+            lock (_lock)
+            {
+                Array.Copy(values, _writingBuffer, ChannelsCount);
+            }
         }
 
         public override int Read(float[] buffer, int offset, int sampleCount)
         {
             for (int i = offset; i < sampleCount; i++)
             {
-                //byte polarity = _ppmProfile.Polarity == PpmPolarity.LOW ? (byte) 0 : (byte)1;
                 if (_currentChannelSample <= _pauseSamples)
-                    buffer[i] = -1f; //(byte) (1 - polarity);
+                    buffer[i] = 1;// GetValue(false);
                 else
-                    buffer[i] = 0; //polarity;
+                    buffer[i] = 0;// GetValue(true);
 
                 _currentChannelSample++;
                 _totalSamples--;
-                
+
                 if (_currentChannelSample > _periodSamples)
                     TakeNextChannel();
             }
@@ -218,36 +228,48 @@ namespace AudioPPM
         /// </summary>
         private void TakeNextChannel()
         {
-            Console.WriteLine();
-
             _currentChannel++;
             _currentChannelSample = 0;
 
-            if (_currentChannel == Channels)
+            if (_currentChannel == ChannelsCount)
             {
                 //Pause
-
                 _periodSamples = _totalSamples;
-                _pauseSamples = 0;
 
                 _totalSamples = 0;
                 _currentChannel = -1;
+
+                lock (_lock)
+                {
+                    Array.Copy(_writingBuffer, _playingBuffer, ChannelsCount);
+                }
             }
             else
             {
-                _pauseSamples = (int) (_ppmProfile.PauseDuration / 1000000.0 * _waveFormat.SampleRate);
+                float period = _playingBuffer[_currentChannel] / 255.0f *
+                            (_ppmProfile.MaxChannelDuration -
+                            _ppmProfile.MinChannelDuration) +
+                            _ppmProfile.MinChannelDuration;
 
-                double period = _buffers[_currentBuffer][_currentChannel] / 255.0 *
-                                                                              (_ppmProfile.MaxChannelDuration -
-                                                                               _ppmProfile.MinChannelDuration) +
-                                                                              _ppmProfile.MinChannelDuration;
-
-                _periodSamples = (int) (period / 1000000.0 * _waveFormat.SampleRate);
+                _periodSamples = (int)(period / DIVIDER * _waveFormat.SampleRate);
 
                 // New packages started - reset total samples counter
                 if (_currentChannel == 0)
-                    _totalSamples = (int) (_ppmProfile.Period / 1000000.0 * _waveFormat.SampleRate);
+                    _totalSamples = (int)(_ppmProfile.Period / DIVIDER * _waveFormat.SampleRate);
             }
+        }
+
+        /// <summary>
+        /// Get sample value by selected PPM polarity and needed value
+        /// </summary>
+        /// <param name="isSignal">Is value signal (variable length) or pause (constant length)</param>
+        /// <returns></returns>
+        private float GetValue(bool isSignal)
+        {
+            if (isSignal)
+                return _ppmProfile.Polarity == PpmPolarity.HIGH ? 0 : -1;
+            else
+                return _ppmProfile.Polarity == PpmPolarity.HIGH ? -1 : 0;
         }
     }
 }
