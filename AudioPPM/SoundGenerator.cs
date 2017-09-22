@@ -25,7 +25,7 @@ namespace AudioPPM
         public static MMDeviceCollection GetDevices()
         {
             MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.All);
+            return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
         }
 
         public void SetValues(byte[] values)
@@ -89,8 +89,8 @@ namespace AudioPPM
         {
             return new PpmProfile()
             {
-                PauseDuration = 500,
-                Polarity = PpmPolarity.HIGH,
+                PauseDuration = 400,
+                Polarity = PpmPolarity.LOW,
                 MinChannelDuration = 1000,
                 MaxChannelDuration = 2000,
                 Period = 20000
@@ -207,9 +207,9 @@ namespace AudioPPM
             for (int i = offset; i < sampleCount; i++)
             {
                 if (_currentChannelSample <= _pauseSamples)
-                    buffer[i] = 1;// GetValue(false);
+                    buffer[i] =  GetValue(false);
                 else
-                    buffer[i] = 0;// GetValue(true);
+                    buffer[i] =  GetValue(true);
 
                 _currentChannelSample++;
                 _totalSamples--;

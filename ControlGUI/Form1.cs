@@ -55,7 +55,7 @@ namespace ControlGUI
             }
 
             _generator = new PpmGenerator(CHANNELS_COUNT, _devices[listboxDevices.SelectedIndex]);
-            _generator.SetValues(_channelValues);
+            UpdateValues();
             _generator.Start();
         }
 
