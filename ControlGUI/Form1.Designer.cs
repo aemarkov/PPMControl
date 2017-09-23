@@ -34,10 +34,10 @@
             this.trackbarThrottle = new System.Windows.Forms.TrackBar();
             this.trackbarRudder = new System.Windows.Forms.TrackBar();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.btnStart = new System.Windows.Forms.Button();
-            this.btnStop = new System.Windows.Forms.Button();
-            this.btnUpdate = new System.Windows.Forms.Button();
             this.listboxDevices = new System.Windows.Forms.ListBox();
+            this.btnUpdate = new System.Windows.Forms.Button();
+            this.btnStop = new System.Windows.Forms.Button();
+            this.btnStart = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackbarElevator)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackbarEleron)).BeginInit();
@@ -57,7 +57,7 @@
             this.groupBox1.Size = new System.Drawing.Size(387, 222);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Управление";
+            this.groupBox1.Text = "Control";
             // 
             // trackbarElevator
             // 
@@ -115,27 +115,16 @@
             this.groupBox2.Size = new System.Drawing.Size(432, 222);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Выбор устройства";
+            this.groupBox2.Text = "Output device";
             // 
-            // btnStart
+            // listboxDevices
             // 
-            this.btnStart.Location = new System.Drawing.Point(6, 189);
-            this.btnStart.Name = "btnStart";
-            this.btnStart.Size = new System.Drawing.Size(78, 23);
-            this.btnStart.TabIndex = 1;
-            this.btnStart.Text = "Start";
-            this.btnStart.UseVisualStyleBackColor = true;
-            this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
-            // 
-            // btnStop
-            // 
-            this.btnStop.Location = new System.Drawing.Point(99, 189);
-            this.btnStop.Name = "btnStop";
-            this.btnStop.Size = new System.Drawing.Size(78, 23);
-            this.btnStop.TabIndex = 2;
-            this.btnStop.Text = "Stop";
-            this.btnStop.UseVisualStyleBackColor = true;
-            this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
+            this.listboxDevices.FormattingEnabled = true;
+            this.listboxDevices.HorizontalScrollbar = true;
+            this.listboxDevices.Location = new System.Drawing.Point(6, 19);
+            this.listboxDevices.Name = "listboxDevices";
+            this.listboxDevices.Size = new System.Drawing.Size(420, 160);
+            this.listboxDevices.TabIndex = 4;
             // 
             // btnUpdate
             // 
@@ -147,14 +136,25 @@
             this.btnUpdate.UseVisualStyleBackColor = true;
             this.btnUpdate.Click += new System.EventHandler(this.btnUpdate_Click);
             // 
-            // listboxDevices
+            // btnStop
             // 
-            this.listboxDevices.FormattingEnabled = true;
-            this.listboxDevices.HorizontalScrollbar = true;
-            this.listboxDevices.Location = new System.Drawing.Point(6, 19);
-            this.listboxDevices.Name = "listboxDevices";
-            this.listboxDevices.Size = new System.Drawing.Size(420, 160);
-            this.listboxDevices.TabIndex = 4;
+            this.btnStop.Location = new System.Drawing.Point(99, 189);
+            this.btnStop.Name = "btnStop";
+            this.btnStop.Size = new System.Drawing.Size(78, 23);
+            this.btnStop.TabIndex = 2;
+            this.btnStop.Text = "Stop";
+            this.btnStop.UseVisualStyleBackColor = true;
+            this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
+            // 
+            // btnStart
+            // 
+            this.btnStart.Location = new System.Drawing.Point(6, 189);
+            this.btnStart.Name = "btnStart";
+            this.btnStart.Size = new System.Drawing.Size(78, 23);
+            this.btnStart.TabIndex = 1;
+            this.btnStart.Text = "Start";
+            this.btnStart.UseVisualStyleBackColor = true;
+            this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
             // 
             // Form1
             // 
@@ -163,8 +163,10 @@
             this.ClientSize = new System.Drawing.Size(849, 245);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "PPM Control";
             this.groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.trackbarElevator)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackbarEleron)).EndInit();

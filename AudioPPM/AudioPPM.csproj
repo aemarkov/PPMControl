@@ -44,8 +44,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PpmProfile.cs" />
+    <Compile Include="PpmProvider.cs" />
     <Compile Include="SoundGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StandartProfiles.cs" />
+    <Compile Include="WaveProvider32.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

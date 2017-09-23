@@ -12,17 +12,7 @@ namespace ConsoleTest
     {
         static void Main(string[] args)
         {
-            var gen = new PpmGenerator();
-
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            foreach (MMDevice device in enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All))
-            {
-               // Console.WriteLine("{0}, {1}", device.FriendlyName, device.State);
-            }
-
-            gen.Start();
-            Console.ReadKey();
-            gen.Stop();
+            
         }
     }
 }
